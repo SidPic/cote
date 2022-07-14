@@ -6,23 +6,19 @@
 #include <assert.h>
 
 struct Object {
-    ObjectData* data;
-    unsigned   flags;
     void* attributes;
+    unsigned   flags;
+    ObjectData* data;
 };
 
-Object*    objnew (ObjectData*); // need to free memory
-void       objdel (Object*);     // free Object memory
-ObjectMap* objmap (Object*);     // need to free memory, free with free()
+/* sets Object attributes & flags from ObjectData */
+Object*    objset (Object*, ObjectData*);
+/* bind ObjectMap to Object */
+ObjectMap* objmap (ObjectMap*, Object*);
+/* clear  the Object attributes & attributes flags*/
+void       objclr (Object*);
 
-/* (re)bind map to object */
-ObjectMap* objsetmap (ObjectMap*, Object*);
-
-/* objmap, but uses alloca for memory allocation,
-   automatically frees the memory when the calling function returns,
-   GNU GCC only, for more info see man alloca */
-ObjectMap* objmapa (Object*);
-
+/* implementation of direct access to Object attributes */
 struct ObjectMap {
     armor_t*     armor;
     health_t*    health;
@@ -38,7 +34,7 @@ struct ObjectMap {
 };
 
 enum /* Attributes & Flags */ {
-    ARMOR       =0,  HAS_ARMOR      =1u<<0,  OBJ_TO_FREE =1u<<11,
+    ARMOR       =0,  HAS_ARMOR      =1u<<0,
     HEALTH      =1,  HAS_HEALTH     =1u<<1,
     DAMAGE      =2,  HAS_DAMAGE     =1u<<2,
     SPEED       =3,  HAS_SPEED      =1u<<3,
@@ -50,21 +46,10 @@ enum /* Attributes & Flags */ {
     FRAME       =9,  HAS_FRAME      =1u<<9,
     ANIMATION   =10, HAS_ANIMATION  =1u<<10,
     // counter       // begin of custom flags
-    ATTRIBUTES  =11, CUSTOM_FLAG    =1u<<22,
+    ATTRIBUTES  =11, CUSTOM_FLAG    =1u<<11,
 };
 
 extern const size_t    COTE_SIZEOF_ATTRIBUTE      [ATTRIBUTES];
 extern const ptrdiff_t COTE_OFFSETOF_ATTRIBUTE_MAP[ATTRIBUTES];
-
-
-#if defined __GNUC__
-#define objmapa( object )                                                                \
-(__extension__({                                                                         \
-    objsetmap(alloca(sizeof(ObjectMap)), object);                                        \
-}))
-#else
-#define objmapa( object ) ({ assert(0 && "__GNUC__ is not defined!"); NULL; })
-#endif /*!defined __GNUC__*/
-
 
 #endif /*!COTE_OBJECT_H*/

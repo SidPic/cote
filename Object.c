@@ -7,11 +7,12 @@
 #define attroffset_data( attr ) COTE_OFFSETOF_ATTRIBUTE_DATA[attr]
 #define as(type, attr)          *((type*)(attr))
 
-Object* objnew (ObjectData* data) {
-    Object* object = (Object*)malloc(sizeof(Object));
+Object* objset (Object* object, ObjectData* data) {
     register void*   field       = NULL;
     register int     attr        = 0;
     register size_t  total_size  = 0;
+
+    if (object->attributes != NULL) objclr(object);
 
     // counting a total attributes size
     for (;attr < ATTRIBUTES; ++attr)
@@ -47,11 +48,11 @@ Object* objnew (ObjectData* data) {
     }
 
     object->data = data;
-    object->flags = data->flags | OBJ_TO_FREE;
+    object->flags = data->flags;
     return object;
 }
 
-ObjectMap* objsetmap (ObjectMap* map, Object* object) {
+ObjectMap* objmap (ObjectMap* map, Object* object) {
     register int   attr  = 0;
     register void* field = object->attributes;
 
@@ -67,13 +68,7 @@ ObjectMap* objsetmap (ObjectMap* map, Object* object) {
     return map;
 }
 
-inline ObjectMap* objmap (Object* object) {
-    return objsetmap(malloc(sizeof(ObjectMap)),object);
-}
-
-/* the objmapa implemented with #define in Object.h */
-
-void objdel (Object* object) {
+void objclr (Object* object) {
     if (object->flags & HAS_INVENTORY) {
         register int   attr   = 0;
         register void* field  = object->attributes;
@@ -89,8 +84,6 @@ void objdel (Object* object) {
     }
 
     free(object->attributes);
-
-    if (object->flags & OBJ_TO_FREE) free(object);
 }
 
 const size_t COTE_SIZEOF_ATTRIBUTE[ATTRIBUTES] = {
